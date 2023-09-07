@@ -9,16 +9,19 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import lombok.Data;
 
+@Data
 @Entity(name = "categorias")
 public class Categoria {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  public Long categoriaID;
+  @Column(name = "categoria_id")
+  private Long id;
 
   @Column(name = "nome", columnDefinition = "VARCHAR(40)", nullable = false)
-  public String nome;
+  private String nome;
 
   @ManyToMany(fetch = FetchType.EAGER, mappedBy = "categorias")
-  List<Produto> produtos;
+  private List<Produto> produtos;
 }
