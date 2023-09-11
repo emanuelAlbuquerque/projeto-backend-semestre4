@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import ch.qos.logback.core.net.server.Client;
 import jakarta.validation.Valid;
-import projeto_back_end.projeto_back_end.DTO.CategoriasDTOs.CriarCategoriaRequest;
-import projeto_back_end.projeto_back_end.DTO.CategoriasDTOs.PegarCategoriaResponse;
+import projeto_back_end.projeto_back_end.DTO.ClientesDTOs.CriarClienteRequest;
+import projeto_back_end.projeto_back_end.DTO.ClientesDTOs.PegarClienteResponse;
+import projeto_back_end.projeto_back_end.DTO.CategoriasDTOs.DeletarCategoriaResponse;
 import projeto_back_end.projeto_back_end.DTO.ClientesDTOs.AtualizarClienteRequest;
 import projeto_back_end.projeto_back_end.DTO.ClientesDTOs.AtualizarClienteResponse;
 import projeto_back_end.projeto_back_end.DTO.ClientesDTOs.CriarClienteRequest;
@@ -41,18 +43,20 @@ public class ClienteController {
 
 	private static final List<Cliente> Clientes = null;
 
+	private static final Sort ListarClientesResponse = null;
+
 	@Autowired
 	private ClientesRepositorio clienteRepositorio;
 
 	@Autowired
 	private PedidosRepositorio pedidosRepositorio;
 
-	// Listar todas as Clientes
+	// Listar todos os Clientes
 	@GetMapping(value = "/listarClientes", produces = "application/json")
 	public ResponseEntity<?> listarClientes() {
 		try {
-			ListCrudRepository<Cliente, Long> cRieetepositorio;
-			List<Cliente> clientes = clienteRepositorio.findAll(
+			ListCrudRepository<Cliente, Long> clienterepositorio;
+			List<Cliente> clientes = clienteRepositorio.findAll();
 			ListarClientesResponse listarClientesResponse = new ListarClientesResponse();
 
 			listarClientesResponse.setQuantidade(Clientes.size());
@@ -63,7 +67,7 @@ public class ClienteController {
 				listarClientesResponse.getMessages().add("Não existe nenhum pedido no carrinho.");
 			}
 
-			llllistarClientesResponse.setClientes(Clientes);
+			listarClientesResponse.setClientes(Clientes);
 
 			return new ResponseEntity<>(listarClientesResponse, HttpStatus.OK);
 		} catch (DataIntegrityViolationException ex) {
@@ -83,17 +87,17 @@ public class ClienteController {
 			Optional<Cliente> cliente = clienteRepositorio.findById(id);
 
 			if (cliente.isPresent()) {
-				PegarCategoriaResponse pegarclienteResponse = new PegarCategoriaResponse();
+				PegarClienteResponse pegarclienteResponse = new PegarClienteResponse();
 
-				pegarclienteResponse.setcliente(cliente.get());
-				pegarclienteResponse.getMessages().add("cliente encontrada.");
+				pegarclienteResponse.setCliente(cliente.get());
+				pegarclienteResponse.getMessages().add("cliente encontrado.");
 				pegarclienteResponse.setStatus_code(200);
 				pegarclienteResponse.setStatus(HttpStatus.OK);
 
 				return new ResponseEntity<>(pegarclienteResponse, HttpStatus.OK);
 			} else {
 				ErrorResponse erro = new ErrorResponse();
-				erro.getMessages().add("cliente não encontrada");
+				erro.getMessages().add("cliente não encontrado");
 				erro.setStatus_code(404);
 				erro.setStatus(HttpStatus.NOT_FOUND);
 
@@ -111,7 +115,7 @@ public class ClienteController {
 
 	// Criar uma nova cliente
 	@PostMapping("/criarcliente")
-	public ResponseEntity<?> criarcliente(@Valid @RequestBody CriarCategoriaRequest clienteRequest,
+	public ResponseEntity<?> criarcliente(@Valid @RequestBody CriarClienteRequest clienteRequest,
 			BindingResult bindingResult) {
 		try {
 			if (bindingResult.hasErrors()) {
@@ -129,7 +133,7 @@ public class ClienteController {
 				Cliente cliente = new Cliente();
 
 				if (clienteRequest.getPedidosIDs() != null) {
-					List<Produto> pedidos = pedidosRepositorio.findAllById(clienteRequest.getPedidosIDs());
+					List<Produto> pedidos = PedidosRepositorio.findAllByIdd(clienteRequest.getPedidosIDs());
 					cliente.setPedidos(pedidos);
 				}
 
@@ -137,8 +141,8 @@ public class ClienteController {
 
 				clienteRepositorio.save(cliente);
 
-				CriarclienteResponse response = new CriarclienteResponse();
-				response.setcliente(cliente);
+				CriarClienteResponse response = new CriarClienteResponse();
+				response.setCliente(cliente);
 				response.getMessages().add("Cliente cadastrado com sucesso.");
 				response.setStatus_code(201);
 				response.setStatus(HttpStatus.CREATED);
@@ -157,7 +161,7 @@ public class ClienteController {
 	// Atualizar uma cliente existente
 	@PutMapping("/atualizarcliente/{id}")
 	public ResponseEntity<?> atualizarcliente(@PathVariable Long id,
-			@Valid @RequestBody AtualizarclienteRequest cliente, BindingResult bindingResult) {
+			@Valid @RequestBody AtualizarClienteRequest cliente, BindingResult bindingResult) {
 
 		try {
 			if (bindingResult.hasErrors()) {
@@ -172,7 +176,7 @@ public class ClienteController {
 
 				return new ResponseEntity<>(error, HttpStatus.PRECONDITION_REQUIRED);
 			} else {
-				Optional<cliente> clienteExistente = clienteRepositorio.findById(id);
+				Optional<Cliente> clienteExistente = clienteRepositorio.findById(id);
 
 				if (clienteExistente.isPresent()) {
 
@@ -184,15 +188,15 @@ public class ClienteController {
 
 					clienteRepositorio.save(clienteExistente.get());
 
-					AtualizarclienteResponse response = new AtualizarclienteResponse();
-					response.setcliente(clienteExistente.get());
-					response.getMessages().add("Categria atualizada com sucesso.");
+					AtualizarClienteResponse response = new AtualizarClienteResponse();
+					response.setCliente(clienteExistente.get());
+					response.getMessages().add("Cadastro atualizado com sucesso.");
 					response.setStatus_code(201);
 					response.setStatus(HttpStatus.CREATED);
 					return new ResponseEntity<>(response, HttpStatus.CREATED);
 				} else {
 					ErrorResponse erro = new ErrorResponse();
-					erro.getMessages().add("cliente não encontrada");
+					erro.getMessages().add("cliente não encontrado");
 					erro.setStatus_code(404);
 					erro.setStatus(HttpStatus.NOT_FOUND);
 
@@ -216,7 +220,7 @@ public class ClienteController {
 			Optional<Cliente> cliente = clienteRepositorio.findById(id);
 			if (cliente.isPresent()) {
 				clienteRepositorio.deleteById(id);
-				DeletarclienteResponse deletarclienteResponse = new DeletarclienteResponse();
+				DeletarCategoriaResponse deletarclienteResponse = new DeletarCategoriaResponse();
 
 				deletarclienteResponse.getMessages().add("cliente deletado com sucesso.");
 				deletarclienteResponse.setStatus_code(200);
