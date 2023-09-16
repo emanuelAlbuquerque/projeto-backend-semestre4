@@ -17,24 +17,24 @@ public class Cliente {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	public Long clienteID;
+	private Long clienteID;
 
 	@Column(name = "nome", columnDefinition = "VARCHAR(255)", nullable = false)
-	public String nome;
+	private String nome;
 
-	@Column(name = "data_nascimento", columnDefinition = "VARCHAR(10)", nullable = false)
-	public String dataNascimento;
+	@Column(name = "idade", columnDefinition = "int", nullable = false)
+	private int idade;
 
 	@Column(name = "cpf", columnDefinition = "VARCHAR(14)", nullable = false)
-	public String cpf;
+	private String cpf;
 
 	@Column(name = "genero", columnDefinition = "VARCHAR(9)", nullable = false)
-	public String genero;
+	private String genero;
 
 	@Column(name = "email", columnDefinition = "VARCHAR(40)", nullable = false)
-	public String email;
+	private String email;
 
 	@OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
-	public List<Pedido> pedidos;
+	private List<Pedido> pedidos;
 
 }

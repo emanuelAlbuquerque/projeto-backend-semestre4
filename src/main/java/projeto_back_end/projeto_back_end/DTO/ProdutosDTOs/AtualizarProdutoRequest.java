@@ -25,6 +25,4 @@ public class AtualizarProdutoRequest {
 
   @NotBlank(message = "O tamanho não pode ser vazio")
   private String tamanho;
-
-  private List<Long> categorias;
 }

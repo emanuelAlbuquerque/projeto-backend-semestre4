@@ -8,5 +8,9 @@ import projeto_back_end.projeto_back_end.Models.Categoria;
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class CriarCategoriaResponse extends BasicDTO {
-  private Categoria categoria;
+  private CategoriaResponse categoria;
+
+  public void setCategoria(Categoria categoria) {
+    this.categoria = new CategoriaResponse(categoria);
+  }
 }

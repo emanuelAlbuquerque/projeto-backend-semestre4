@@ -6,5 +6,9 @@ import projeto_back_end.projeto_back_end.Models.Categoria;
 
 @Data
 public class AtualizarCategoriaResponse extends BasicDTO {
-  private Categoria categoria;
+  private CategoriaResponse categoria;
+
+  public void setCategoria(Categoria categoria) {
+    this.categoria = new CategoriaResponse(categoria);
+  }
 }

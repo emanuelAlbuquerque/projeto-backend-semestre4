@@ -9,7 +9,7 @@ class ClienteResponse {
   private String nome;
   private String cpf;
   private String genero;
-  private String dataNascimento;
+  private int idade;
   private String email;
 
   public ClienteResponse(Cliente cliente) {
@@ -17,7 +17,7 @@ class ClienteResponse {
     this.nome = cliente.getNome();
     this.cpf = cliente.getCpf();
     this.genero = cliente.getGenero();
-    this.dataNascimento = cliente.getDataNascimento();
+    this.idade = cliente.getIdade();
     this.email = cliente.getEmail();
   }
 }

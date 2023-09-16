@@ -4,7 +4,7 @@ import lombok.Data;
 import projeto_back_end.projeto_back_end.Models.Categoria;
 
 @Data
-class CategoriaResponse {
+public class CategoriaResponse {
   private Long id;
   private String nome;
 

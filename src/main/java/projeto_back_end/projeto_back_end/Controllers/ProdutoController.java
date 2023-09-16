@@ -21,9 +21,9 @@ import projeto_back_end.projeto_back_end.DTO.ProdutosDTOs.AtualizarProdutoRespon
 import projeto_back_end.projeto_back_end.DTO.ProdutosDTOs.CriarProdutoRequest;
 import projeto_back_end.projeto_back_end.DTO.ProdutosDTOs.CriarProdutoResponse;
 import projeto_back_end.projeto_back_end.DTO.ProdutosDTOs.DeletarProdutoResponse;
+import projeto_back_end.projeto_back_end.DTO.ProdutosDTOs.ListarCategoriasDoProdutoResponse;
 import projeto_back_end.projeto_back_end.DTO.ProdutosDTOs.ListarProdutosResponse;
 import projeto_back_end.projeto_back_end.DTO.ProdutosDTOs.PegarProdutoResponse;
-import projeto_back_end.projeto_back_end.Models.Categoria;
 import projeto_back_end.projeto_back_end.Models.Produto;
 import projeto_back_end.projeto_back_end.Repository.CategoriasRepositorio;
 import projeto_back_end.projeto_back_end.Repository.ProdutosRepositorio;
@@ -120,13 +120,6 @@ public class ProdutoController {
       try {
         CriarProdutoResponse response = new CriarProdutoResponse();
         Produto novoProduto = new Produto();
-
-        if (produto.getCategoriaIds() != null) {
-          List<Categoria> categorias = new ArrayList<>();
-          categorias = categoriasRepositorio.findByIdIn(produto.getCategoriaIds());
-          novoProduto.setCategorias(categorias);
-        }
-
         UUID codProduto = UUID.randomUUID();
 
         novoProduto.setNome(produto.getNome());
@@ -172,12 +165,6 @@ public class ProdutoController {
         Optional<Produto> produtoExistente = produtoRepositorio.findById(id);
 
         if (produtoExistente.isPresent()) {
-
-          if (produto.getCategorias() != null) {
-            List<Categoria> categorias = categoriasRepositorio.findByIdIn(produto.getCategorias());
-            produtoExistente.get().setCategorias(categorias);
-          }
-
           produtoExistente.get().setNome(produto.getNome());
           produtoExistente.get().setDescricao(produto.getDescricao());
           produtoExistente.get().setPreco(produto.getPreco());
@@ -232,11 +219,47 @@ public class ProdutoController {
 
         return new ResponseEntity<>(erro, HttpStatus.NOT_FOUND);
       }
-    } catch (Exception ex) {
+    } catch (DataIntegrityViolationException ex) {
       ErrorResponse erro = new ErrorResponse();
       erro.getMessages().add(ex.getLocalizedMessage());
       erro.setStatus_code(500);
       erro.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<>(erro, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @GetMapping("/listarCategoriasDoProduto/{id}")
+  public ResponseEntity<?> listarCategoriasDoProduto(@PathVariable Long id) {
+    try {
+      Optional<Produto> produto = produtoRepositorio.findById(id);
+
+      if (produto.isPresent()) {
+        ListarCategoriasDoProdutoResponse response = new ListarCategoriasDoProdutoResponse();
+
+        if (produto.get().getCategorias().size() == 0) {
+          response.getMessages().add("Não existe nenhuma categoria vinculada a este produto");
+        }
+
+        response.setQuantidade(produto.get().getCategorias().size());
+        response.setCategorias(produto.get().getCategorias());
+        response.setStatus_code(200);
+        response.setStatus(HttpStatus.OK);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+      } else {
+        ErrorResponse erro = new ErrorResponse();
+        erro.getMessages().add("Produto não encontrado");
+        erro.setStatus_code(404);
+        erro.setStatus(HttpStatus.NOT_FOUND);
+
+        return new ResponseEntity<>(erro, HttpStatus.NOT_FOUND);
+      }
+    } catch (DataIntegrityViolationException ex) {
+      ErrorResponse erro = new ErrorResponse();
+      erro.getMessages().add(ex.getLocalizedMessage());
+      erro.setStatus_code(500);
+      erro.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+
       return new ResponseEntity<>(erro, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

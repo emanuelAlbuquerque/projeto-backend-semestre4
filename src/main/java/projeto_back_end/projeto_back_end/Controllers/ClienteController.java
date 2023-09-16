@@ -55,16 +55,15 @@ public class ClienteController {
 	@GetMapping(value = "/listarClientes", produces = "application/json")
 	public ResponseEntity<?> listarClientes() {
 		try {
-			ListCrudRepository<Cliente, Long> clienterepositorio;
 			List<Cliente> clientes = clienteRepositorio.findAll();
 			ListarClientesResponse listarClientesResponse = new ListarClientesResponse();
 
-			listarClientesResponse.setQuantidade(Clientes.size());
+			listarClientesResponse.setQuantidade(clientes.size());
 			listarClientesResponse.setStatus(HttpStatus.OK);
 			listarClientesResponse.setStatus_code(200);
 
 			if (Clientes.size() == 0) {
-				listarClientesResponse.getMessages().add("Não existe nenhum pedido no carrinho.");
+				listarClientesResponse.getMessages().add("Não existe nenhum cliente cadastrado.");
 			}
 
 			listarClientesResponse.setClientes(Clientes);
@@ -87,14 +86,14 @@ public class ClienteController {
 			Optional<Cliente> cliente = clienteRepositorio.findById(id);
 
 			if (cliente.isPresent()) {
-				PegarClienteResponse pegarclienteResponse = new PegarClienteResponse();
+				PegarClienteResponse pegarClienteResponse = new PegarClienteResponse();
 
-				pegarclienteResponse.setCliente(cliente.get());
-				pegarclienteResponse.getMessages().add("cliente encontrado.");
-				pegarclienteResponse.setStatus_code(200);
-				pegarclienteResponse.setStatus(HttpStatus.OK);
+				pegarClienteResponse.setCliente(cliente.get());
+				pegarClienteResponse.getMessages().add("cliente encontrado.");
+				pegarClienteResponse.setStatus_code(200);
+				pegarClienteResponse.setStatus(HttpStatus.OK);
 
-				return new ResponseEntity<>(pegarclienteResponse, HttpStatus.OK);
+				return new ResponseEntity<>(pegarClienteResponse, HttpStatus.OK);
 			} else {
 				ErrorResponse erro = new ErrorResponse();
 				erro.getMessages().add("cliente não encontrado");
@@ -114,7 +113,7 @@ public class ClienteController {
 	}
 
 	// Criar uma nova cliente
-	@PostMapping("/criarcliente")
+	@PostMapping("/criarCliente")
 	public ResponseEntity<?> criarcliente(@Valid @RequestBody CriarClienteRequest clienteRequest,
 			BindingResult bindingResult) {
 		try {
@@ -131,13 +130,11 @@ public class ClienteController {
 				return new ResponseEntity<>(error, HttpStatus.PRECONDITION_REQUIRED);
 			} else {
 				Cliente cliente = new Cliente();
-
-				if (clienteRequest.getPedidosIDs() != null) {
-					List<Produto> pedidos = PedidosRepositorio.findAllByIdd(clienteRequest.getPedidosIDs());
-					cliente.setPedidos(pedidos);
-				}
-
 				cliente.setNome(clienteRequest.getNome());
+				cliente.setCpf(clienteRequest.getCpf());
+				cliente.setIdade(clienteRequest.getIdade());
+				cliente.setGenero(cliente.getGenero());
+				cliente.setEmail(clienteRequest.getEmail());
 
 				clienteRepositorio.save(cliente);
 
@@ -179,12 +176,13 @@ public class ClienteController {
 				Optional<Cliente> clienteExistente = clienteRepositorio.findById(id);
 
 				if (clienteExistente.isPresent()) {
-
-					if (cliente.getPedidosIDs() != null) {
-						List<Produto> pedidos = pedidosRepositorio.findAllById(cliente.getPedidosIDs());
-						clienteExistente.get().setPedidos(pedidos);
-					}
 					clienteExistente.get().setNome(cliente.getNome());
+
+					clienteExistente.get().setNome(cliente.getNome());
+					clienteExistente.get().setCpf(cliente.getCpf());
+					clienteExistente.get().setIdade(cliente.getIdade());
+					clienteExistente.get().setGenero(cliente.getGenero());
+					clienteExistente.get().setEmail(cliente.getEmail());
 
 					clienteRepositorio.save(clienteExistente.get());
 
@@ -214,27 +212,27 @@ public class ClienteController {
 	}
 
 	// Deletar uma cliente por ID
-	@DeleteMapping("/deletarcliente/{id}")
+	@DeleteMapping("/deletarCliente/{id}")
 	public ResponseEntity<?> deletarcliente(@PathVariable Long id) {
 		try {
 			Optional<Cliente> cliente = clienteRepositorio.findById(id);
 			if (cliente.isPresent()) {
 				clienteRepositorio.deleteById(id);
-				DeletarCategoriaResponse deletarclienteResponse = new DeletarCategoriaResponse();
+				DeletarClienteResponse deletarClienteResponse = new DeletarClienteResponse();
 
-				deletarclienteResponse.getMessages().add("cliente deletado com sucesso.");
-				deletarclienteResponse.setStatus_code(200);
-				deletarclienteResponse.setStatus(HttpStatus.OK);
-				return new ResponseEntity<>(deletarclienteResponse, HttpStatus.OK);
+				deletarClienteResponse.getMessages().add("Cliente deletado com sucesso.");
+				deletarClienteResponse.setStatus_code(200);
+				deletarClienteResponse.setStatus(HttpStatus.OK);
+				return new ResponseEntity<>(deletarClienteResponse, HttpStatus.OK);
 			} else {
 				ErrorResponse erro = new ErrorResponse();
-				erro.getMessages().add("cliente não encontrado");
+				erro.getMessages().add("Cliente não encontrado. ");
 				erro.setStatus_code(404);
 				erro.setStatus(HttpStatus.NOT_FOUND);
 
 				return new ResponseEntity<>(erro, HttpStatus.NOT_FOUND);
 			}
-		} catch (Exception ex) {
+		} catch (DataIntegrityViolationException ex) {
 			ErrorResponse erro = new ErrorResponse();
 			erro.getMessages().add(ex.getLocalizedMessage());
 			erro.setStatus_code(500);

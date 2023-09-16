@@ -24,7 +24,10 @@ import projeto_back_end.projeto_back_end.DTO.CategoriasDTOs.CriarCategoriaReques
 import projeto_back_end.projeto_back_end.DTO.CategoriasDTOs.CriarCategoriaResponse;
 import projeto_back_end.projeto_back_end.DTO.CategoriasDTOs.DeletarCategoriaResponse;
 import projeto_back_end.projeto_back_end.DTO.CategoriasDTOs.ListarCategoriasResponse;
+import projeto_back_end.projeto_back_end.DTO.CategoriasDTOs.ListarProdutosDaCategoriaResponse;
 import projeto_back_end.projeto_back_end.DTO.CategoriasDTOs.PegarCategoriaResponse;
+import projeto_back_end.projeto_back_end.DTO.CategoriasDTOs.VincularCategoriasAoProdutoRequest;
+import projeto_back_end.projeto_back_end.DTO.CategoriasDTOs.VincularCategoriasAoProdutoResponse;
 import projeto_back_end.projeto_back_end.DTO.ErrorDTO.ErrorResponse;
 import projeto_back_end.projeto_back_end.Models.Categoria;
 import projeto_back_end.projeto_back_end.Models.Produto;
@@ -38,7 +41,7 @@ public class CategoriaController {
   private CategoriasRepositorio categoriaRepositorio;
 
   @Autowired
-  private ProdutosRepositorio produtosRepositorio;
+  private ProdutosRepositorio produtoRepositorio;
 
   // Listar todas as categorias
   @GetMapping(value = "/listarCategorias", produces = "application/json")
@@ -119,12 +122,6 @@ public class CategoriaController {
         return new ResponseEntity<>(error, HttpStatus.PRECONDITION_REQUIRED);
       } else {
         Categoria categoria = new Categoria();
-
-        if (categoriaRequest.getProdutosIDs() != null) {
-          List<Produto> produtos = produtosRepositorio.findAllById(categoriaRequest.getProdutosIDs());
-          categoria.setProdutos(produtos);
-        }
-
         categoria.setNome(categoriaRequest.getNome());
 
         categoriaRepositorio.save(categoria);
@@ -167,11 +164,6 @@ public class CategoriaController {
         Optional<Categoria> categoriaExistente = categoriaRepositorio.findById(id);
 
         if (categoriaExistente.isPresent()) {
-
-          if (categoria.getProdutosIDs() != null) {
-            List<Produto> produtos = produtosRepositorio.findAllById(categoria.getProdutosIDs());
-            categoriaExistente.get().setProdutos(produtos);
-          }
           categoriaExistente.get().setNome(categoria.getNome());
 
           categoriaRepositorio.save(categoriaExistente.get());
@@ -207,7 +199,15 @@ public class CategoriaController {
     try {
       Optional<Categoria> categoria = categoriaRepositorio.findById(id);
       if (categoria.isPresent()) {
-        categoriaRepositorio.deleteById(id);
+
+        // Remover a categoria da lista de categorias de todos os produtos associados
+        // Não pode deletar uma categria que estja vinculada á um produto, e esse for
+        // pecorre os produtos que essa categoria está vonculada e vai deletand.
+        for (Produto produto : categoria.get().getProdutos()) {
+          produto.getCategorias().remove(categoria.get());
+        }
+
+        categoriaRepositorio.deleteById(categoria.get().getId());
         DeletarCategoriaResponse deletarCategoriaResponse = new DeletarCategoriaResponse();
 
         deletarCategoriaResponse.getMessages().add("Categoria deletada com sucesso.");
@@ -227,6 +227,83 @@ public class CategoriaController {
       erro.getMessages().add(ex.getLocalizedMessage());
       erro.setStatus_code(500);
       erro.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<>(erro, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @PutMapping("/vincularCategoriasAoProduto/{id}")
+  public ResponseEntity<?> vincularCategoriasAoProduto(@PathVariable Long id,
+      @Valid @RequestBody VincularCategoriasAoProdutoRequest categoriasRequest, BindingResult bindingResult) {
+    try {
+      Optional<Produto> produto = produtoRepositorio.findById(id);
+      if (produto.isPresent()) {
+        List<Categoria> categorias = categoriaRepositorio.findAllById(categoriasRequest.getCategoriasIDs());
+
+        produto.get().setCategorias(categorias);
+
+        produtoRepositorio.save(produto.get());
+
+        VincularCategoriasAoProdutoResponse response = new VincularCategoriasAoProdutoResponse();
+        response.setProdutoID(produto.get().getId());
+        response.setNome(produto.get().getNome());
+        response.setCategoriasVinculadas(categorias);
+        response.getMessages().add("Categorias Vinculadas com sucesso.");
+        response.setStatus_code(200);
+        response.setStatus(HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+      } else {
+        ErrorResponse erro = new ErrorResponse();
+        erro.getMessages().add("Produto não encontrado");
+        erro.setStatus_code(404);
+        erro.setStatus(HttpStatus.NOT_FOUND);
+
+        return new ResponseEntity<>(erro, HttpStatus.NOT_FOUND);
+      }
+    } catch (Exception ex) {
+      ErrorResponse erro = new ErrorResponse();
+      erro.getMessages().add(ex.getLocalizedMessage());
+      erro.setStatus_code(500);
+      erro.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<>(erro, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @GetMapping(value = "/listarProdutosDaCategoria/{id}", produces = "application/json")
+  public ResponseEntity<?> listarProdutosDaCategoria(@PathVariable Long id) {
+    try {
+      Optional<Categoria> categoria = categoriaRepositorio.findById(id);
+
+      if (categoria.isPresent()) {
+        ListarProdutosDaCategoriaResponse listarProdutosDaCategoriaResponse = new ListarProdutosDaCategoriaResponse();
+
+        listarProdutosDaCategoriaResponse.setQuantidade(categoria.get().getProdutos().size());
+        listarProdutosDaCategoriaResponse.setStatus(HttpStatus.OK);
+        listarProdutosDaCategoriaResponse.setStatus_code(200);
+
+        if (categoria.get().getProdutos().size() == 0) {
+          listarProdutosDaCategoriaResponse.getMessages().add("Não existe nenhum produto cadastrado.");
+        }
+
+        listarProdutosDaCategoriaResponse.setProdutos(categoria.get().getProdutos());
+
+        System.out.println(listarProdutosDaCategoriaResponse.getProdutos());
+
+        return new ResponseEntity<>(listarProdutosDaCategoriaResponse, HttpStatus.OK);
+      } else {
+        ErrorResponse erro = new ErrorResponse();
+        erro.getMessages().add("Categoria não encontrada");
+        erro.setStatus_code(404);
+        erro.setStatus(HttpStatus.NOT_FOUND);
+
+        return new ResponseEntity<>(erro, HttpStatus.NOT_FOUND);
+      }
+
+    } catch (DataIntegrityViolationException ex) {
+      ErrorResponse erro = new ErrorResponse();
+      erro.getMessages().add(ex.getLocalizedMessage());
+      erro.setStatus_code(500);
+      erro.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+
       return new ResponseEntity<>(erro, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

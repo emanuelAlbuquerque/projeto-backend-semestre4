@@ -1,5 +1,6 @@
 package projeto_back_end.projeto_back_end.Models;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import jakarta.persistence.Column;
@@ -11,30 +12,33 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import lombok.Data;
 
+@Data
 @Entity(name = "pedidos")
 public class Pedido {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	public Long pedidoID;
-
-	@Column(name = "data_atualizada", columnDefinition = "VARCHAR(10)", nullable = false)
-	public String data_atualizada;
+	@Column(name = "pedido_id")
+	private Long pedidoID;
 
 	@Column(name = "metodo_pagamento", columnDefinition = "VARCHAR(15)", nullable = false)
-	public String metodo_pagamento;
+	private String metodoPagamento;
 
 	@Column(name = "status", columnDefinition = "VARCHAR(60)", nullable = false)
-	public String status;
+	private String status;
 
-	@Column(name = "data_pedido", columnDefinition = "VARCHAR(10)", nullable = false)
-	public String data_pedido;
+	@Column(name = "data_pedido", columnDefinition = "DATE", nullable = false)
+	private LocalDate dataPedido;
+
+	@Column(name = "endereco", columnDefinition = "VARCHAR(255)", nullable = false)
+	private String endereco;
 
 	@ManyToOne
 	@JoinColumn(name = "cliente_id", nullable = false)
-	public Cliente cliente;
+	private Cliente cliente;
 
 	@OneToMany(mappedBy = "pedido", fetch = FetchType.EAGER)
-	List<ItemPedido> itensPedidos;
+	private List<ItemPedido> itensPedidos;
 }

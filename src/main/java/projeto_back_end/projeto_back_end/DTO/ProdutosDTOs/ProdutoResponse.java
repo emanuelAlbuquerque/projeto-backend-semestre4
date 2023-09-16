@@ -15,7 +15,6 @@ public class ProdutoResponse {
   private String descricao;
   private Double preco;
   private String tamanho;
-  private List<Categoria> categorias;
 
   public ProdutoResponse(Produto produto) {
     this.id = produto.getId();
@@ -24,6 +23,5 @@ public class ProdutoResponse {
     this.nome = produto.getNome();
     this.preco = produto.getPreco();
     this.tamanho = produto.getTamanho();
-    this.categorias = produto.getCategorias();
   }
 }

@@ -12,6 +12,4 @@ public class AtualizarCategoriaRequest {
   @NotBlank(message = "O nome não pode ser nulo nem vazio")
   @Length(max = 40, message = "O nome não pode ultrapassar 40 caracteres")
   private String nome;
-
-  private List<Long> produtosIDs;
 }
