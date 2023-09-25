@@ -103,7 +103,7 @@ public class ProdutoController {
   }
 
   // Criar um novo produto
-  @PostMapping("/cadastrarProduto")
+  @PostMapping("/criarProduto")
   public ResponseEntity<?> criarProduto(@Valid @RequestBody CriarProdutoRequest produto, BindingResult bindingResult) {
     if (bindingResult.hasErrors()) {
       ErrorResponse error = new ErrorResponse();

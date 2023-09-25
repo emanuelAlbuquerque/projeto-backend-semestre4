@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -19,23 +18,17 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import ch.qos.logback.core.net.server.Client;
 import jakarta.validation.Valid;
 import projeto_back_end.projeto_back_end.DTO.ClientesDTOs.CriarClienteRequest;
 import projeto_back_end.projeto_back_end.DTO.ClientesDTOs.PegarClienteResponse;
-import projeto_back_end.projeto_back_end.DTO.CategoriasDTOs.DeletarCategoriaResponse;
 import projeto_back_end.projeto_back_end.DTO.ClientesDTOs.AtualizarClienteRequest;
 import projeto_back_end.projeto_back_end.DTO.ClientesDTOs.AtualizarClienteResponse;
-import projeto_back_end.projeto_back_end.DTO.ClientesDTOs.CriarClienteRequest;
 import projeto_back_end.projeto_back_end.DTO.ClientesDTOs.CriarClienteResponse;
 import projeto_back_end.projeto_back_end.DTO.ClientesDTOs.DeletarClienteResponse;
 import projeto_back_end.projeto_back_end.DTO.ClientesDTOs.ListarClientesResponse;
-import projeto_back_end.projeto_back_end.DTO.ClientesDTOs.PegarClienteResponse;
 import projeto_back_end.projeto_back_end.DTO.ErrorDTO.ErrorResponse;
 import projeto_back_end.projeto_back_end.Models.Cliente;
-import projeto_back_end.projeto_back_end.Models.Produto;
 import projeto_back_end.projeto_back_end.Repository.ClientesRepositorio;
-import projeto_back_end.projeto_back_end.Repository.PedidosRepositorio;
 import projeto_back_end.projeto_back_end.Repository.PedidosRepositorio;
 
 @RestController
@@ -217,13 +210,22 @@ public class ClienteController {
 		try {
 			Optional<Cliente> cliente = clienteRepositorio.findById(id);
 			if (cliente.isPresent()) {
-				clienteRepositorio.deleteById(id);
 				DeletarClienteResponse deletarClienteResponse = new DeletarClienteResponse();
 
-				deletarClienteResponse.getMessages().add("Cliente deletado com sucesso.");
-				deletarClienteResponse.setStatus_code(200);
-				deletarClienteResponse.setStatus(HttpStatus.OK);
-				return new ResponseEntity<>(deletarClienteResponse, HttpStatus.OK);
+				if (cliente.get().getPedidos().size() > 0) {
+					deletarClienteResponse.getMessages()
+							.add("Não é possível deletar o Cliente pois ele está vinculado a um pedido.");
+					deletarClienteResponse.setStatus_code(200);
+					deletarClienteResponse.setStatus(HttpStatus.OK);
+					return new ResponseEntity<>(deletarClienteResponse, HttpStatus.OK);
+				} else {
+					clienteRepositorio.deleteById(id);
+
+					deletarClienteResponse.getMessages().add("Cliente deletado com sucesso.");
+					deletarClienteResponse.setStatus_code(200);
+					deletarClienteResponse.setStatus(HttpStatus.OK);
+					return new ResponseEntity<>(deletarClienteResponse, HttpStatus.OK);
+				}
 			} else {
 				ErrorResponse erro = new ErrorResponse();
 				erro.getMessages().add("Cliente não encontrado. ");
@@ -232,7 +234,9 @@ public class ClienteController {
 
 				return new ResponseEntity<>(erro, HttpStatus.NOT_FOUND);
 			}
-		} catch (DataIntegrityViolationException ex) {
+		} catch (
+
+		DataIntegrityViolationException ex) {
 			ErrorResponse erro = new ErrorResponse();
 			erro.getMessages().add(ex.getLocalizedMessage());
 			erro.setStatus_code(500);

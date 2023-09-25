@@ -199,21 +199,24 @@ public class CategoriaController {
     try {
       Optional<Categoria> categoria = categoriaRepositorio.findById(id);
       if (categoria.isPresent()) {
-
-        // Remover a categoria da lista de categorias de todos os produtos associados
-        // Não pode deletar uma categria que estja vinculada á um produto, e esse for
-        // pecorre os produtos que essa categoria está vonculada e vai deletand.
-        for (Produto produto : categoria.get().getProdutos()) {
-          produto.getCategorias().remove(categoria.get());
-        }
-
-        categoriaRepositorio.deleteById(categoria.get().getId());
         DeletarCategoriaResponse deletarCategoriaResponse = new DeletarCategoriaResponse();
 
-        deletarCategoriaResponse.getMessages().add("Categoria deletada com sucesso.");
-        deletarCategoriaResponse.setStatus_code(200);
-        deletarCategoriaResponse.setStatus(HttpStatus.OK);
-        return new ResponseEntity<>(deletarCategoriaResponse, HttpStatus.OK);
+        if (categoria.get().getProdutos().size() > 0) {
+          deletarCategoriaResponse.getMessages()
+              .add("Não é possível deletar a categoria pois ela está vinculada a um produto.");
+          deletarCategoriaResponse.setStatus_code(428);
+          deletarCategoriaResponse.setStatus(HttpStatus.PRECONDITION_REQUIRED);
+          return new ResponseEntity<>(deletarCategoriaResponse, HttpStatus.PRECONDITION_REQUIRED);
+
+        } else {
+          categoriaRepositorio.deleteById(categoria.get().getId());
+
+          deletarCategoriaResponse.getMessages().add("Categoria deletada com sucesso.");
+          deletarCategoriaResponse.setStatus_code(200);
+          deletarCategoriaResponse.setStatus(HttpStatus.OK);
+          return new ResponseEntity<>(deletarCategoriaResponse, HttpStatus.OK);
+        }
+
       } else {
         ErrorResponse erro = new ErrorResponse();
         erro.getMessages().add("Categoria não encontrada");

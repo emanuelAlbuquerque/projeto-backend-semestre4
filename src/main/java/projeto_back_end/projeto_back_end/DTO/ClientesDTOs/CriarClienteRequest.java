@@ -16,7 +16,6 @@ import lombok.Data;
 @Data
 public class CriarClienteRequest {
 
-   
   @Length(max = 255, message = "O nome não pode ultrapassar 255 caracteres")
   @NotBlank(message = "O nome não pode ser vazio e nem nulo")
   private String nome;
